@@ -10,7 +10,7 @@ fetch(url).then(response => response.json())
 function dataHandler(data){
     //Extracting datas
     const baseTemperature = data.baseTemperature;
-    const monthlyVariance = data.monthlyVariance.map(d=> d.variance); 
+    const monthlyVariance = data.monthlyVariance.map(d=> (d.variance)); 
     const convertedToDate = data.monthlyVariance.map( d => new Date(d.year, d.month-1))
     const years = data.monthlyVariance.map(d => d.year);
     const months = convertedToDate.map(d => d.getMonth());
@@ -64,18 +64,49 @@ function dataHandler(data){
                     .range([padding - 1, padding + 30*colors.length ])
     
     
+    //Tooltip
+    const tooltip = d3.select('#svgContainer')
+        .append('div')
+        .attr('id','tooltip')
+        .attr('width', 300)
+        .attr('height', 200)
+        .attr('style','opacity:0')
     
-    //Testing (DELETE AFTER)
-    document.getElementById('test').textContent = yMax;
+
+    
     const svg = d3.select('#svgContainer')
                     .append('svg')
                     .attr('width', width+padding)
                     .attr('height', height+padding*2);
     
+    
+    
+    svg.append('text')
+        .text('Year') 
+        .attr('class','label-year')
+        .attr('x',width/2)
+        .attr('y',padding+height-10)
+    
+    svg.append('text')
+        .text('Monthly Global Land-Surface Temperature*')
+        .attr('x', width/2-300)
+        .attr('y', padding/2+10)
+        .attr('id','title')
+    
+    svg.append('text')
+        .text('*1753 - 2015: base temperature 8.6℃')
+        .attr('x', width-200)
+        .attr('y',height+padding+50)
+        .attr('id','description')
+    svg.append('text')
     svg.selectAll('nodes')
         .data(data.monthlyVariance)
         .enter()
         .append('rect')
+        .attr('class','cell')
+        .attr('data-month', (d,i) => convertedToDate[i].getMonth())
+        .attr('data-year', (d,i) => convertedToDate[i].getFullYear())
+        .attr('data-temp', (d,i)=> (baseTemperature + monthlyVariance[i]).toFixed(1))
         .attr('width',4)
         .attr('height',30)
         .attr('x', (d,i)=> xScale(convertedToDate[i].getFullYear()))
@@ -85,13 +116,40 @@ function dataHandler(data){
         .attr('style', (d,i)=>{
         for (let index = 0;index<9;index++){
             let thisNodeTemperature = baseTemperature + monthlyVariance[i]
-            if (temperatureThreshhold[index].t1 < thisNodeTemperature && thisNodeTemperature < temperatureThreshhold[index].t2){
+            if ((temperatureThreshhold[index].t1 < thisNodeTemperature || temperatureThreshhold[index].t1 == thisNodeTemperature) && thisNodeTemperature < temperatureThreshhold[index].t2){
                 return 'fill: ' + colors[index];
                 break;
             }
         }
+    })
+        .on('mouseover', (d,i) =>{
+            
+            tooltip.attr('style', 'transform: translate('+ (xScale(convertedToDate[i].getFullYear()) -50) +'px,' 
+                                                            + (yScale(convertedToDate[i].getMonth())-60) + 'px)')
+                
+             .style('opacity',1)
+             .attr('data-year',convertedToDate[i].getFullYear())
+                      
+            .html(() => {
+                let date = new Date(0);
+                let temp = monthlyVariance.map(d => {if (d>=0){
+                    return "+" + d.toFixed(2);
+                }
+                    else return d.toFixed(2);                                
+                })
+                date.setMonth(months[i]);
+                date.setYear(years[i]);
+                return d3.timeFormat('%B %Y')(date) + '<br>' + (baseTemperature + monthlyVariance[i]).toFixed(1) + ' (' + temp[i] + ')\&#8451';
+            })
+        })
+        .on('mouseout', d => {
+        tooltip.attr('style','opacity:0')
+    })
+    
         //Create legends
-        svg.selectAll('legends')
+    const legend = svg.append('g')
+                        .attr('id','legend');
+        legend.selectAll('legends')
             .data(colors)
             .enter()
             .append('rect')
@@ -102,32 +160,40 @@ function dataHandler(data){
             .attr('style',(d,i)=> 'fill: ' + colors[i])
             .attr('stroke','black')
             .attr('stroke-width',0.5)
-    })
-    
     //Creating and calling Axes
-    const yAxis = d3.axisLeft(yScale).tickFormat(function(month){
+    const yAxis = d3.axisLeft(yScale)
+            .tickFormat(function(month){
         let date = new Date(0);
         date.setMonth(month);
-        return d3.timeFormat('%b')(date);
+        return d3.timeFormat('%B')(date);
     })  
             .tickSize(10,1);
+            
     
-    const xAxis = d3.axisBottom(xScale);
+    const xAxis = d3.axisBottom(xScale)
+                    .tickFormat(d3.format('d'));
+                    
     const legendAxis = d3.axisBottom(legendScale)
             .tickValues(temperature)
             .tickFormat(d3.format(',.1f'));
     
     svg.append('g')
         .attr('transform', 'translate(' + padding + ',15)')
+        .attr('id','y-axis')
         .call(yAxis)
+        
     
     svg.append('g')
         .attr('transform', 'translate(0, ' + (height + 30) + ')' )
-        .call(xAxis)
+        .attr('id','x-axis')
+        .call(xAxis);
     
     svg.append('g')
         .attr('transform', 'translate(0, ' + (height + padding +30) + ')' )
         .call(legendAxis)
     
+    
+    
+        
 }
 
