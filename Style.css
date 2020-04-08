@@ -1,13 +1,65 @@
-*{
+html,body{
     padding: 0px;
     margin: 0px;
+    height: 100%;
+    width: 100%;
 }
 
-svg{
-    background-color: pink;
+#container{
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
     
 }
 
-rect{
+#svgContainer{
+    border-radius: 10px;
+    box-shadow: 5px 5px 5px #4B4253;
+    border: 2px solid #4B4253;
+}
 
+svg{
+    background-color: #EDFFD9;
+    
+}
+
+#x-axis, #y-axis, {
+    font-family: 'Lora';
+    font-size: 11px;
+}
+
+.label-year{
+    font-family: 'Oswald';
+    font-size: 20px;
+}
+
+#description{
+    font-family: 'Lora';
+    font-size: 14px;
+}
+
+#tooltip{
+    
+    height: auto;
+    width: auto;
+    padding: 7px;
+    background-color: #D84727;
+    color: white;
+    position: absolute;
+    font-family: 'Lora';
+    font-size: 16px;
+    border-radius: 10px;
+    box-shadow: 5px 5px 5px #4B4253;
+}
+
+#title{
+    font-family: 'Oswald';
+    font-size: 45px;
+    
+}
+
+#tooltip:hover{
+    display:none;
 }
